@@ -6,20 +6,24 @@ import { Observable, EMPTY, combineLatest, Subscription, tap, catchError, startW
 import { Product } from '../product.interface';
 import { ProductService } from '../../services/product.service';
 import { FavouriteService } from '../../services/favourite.service';
-import { AsyncPipe, UpperCasePipe, SlicePipe, CurrencyPipe } from '@angular/common';
+import { AsyncPipe, UpperCasePipe, SlicePipe, CurrencyPipe, NgIf } from '@angular/common';
 
 @Component({
     selector: 'app-product-list',
     templateUrl: './product-list.component.html',
     styleUrls: ['./product-list.component.css'],
     standalone: true,
-    imports: [RouterLink, AsyncPipe, UpperCasePipe, SlicePipe, CurrencyPipe]
+    imports: [RouterLink, AsyncPipe, UpperCasePipe, SlicePipe, CurrencyPipe, NgIf]
 })
 export class ProductListComponent implements OnInit {
 
   title: string = 'Products';
   selectedProduct: Product;
+
   products$: Observable<Product[]>;
+  productsNumber$ : Observable<number>;
+  mostExpensiveProduct$: Observable<Product>;
+
   errorMessage;
 
   constructor(
@@ -32,6 +36,17 @@ export class ProductListComponent implements OnInit {
     this.products$ = this
                       .productService
                       .products$;
+
+    this.productsNumber$ = this
+                              .products$
+                              .pipe(
+                                map(products => products.length),
+                                startWith(0)
+                              )
+
+    this.mostExpensiveProduct$ = this
+                                  .productService
+                                  .mostExpensiveProduct$;
   }
 
   get favourites(): number {
@@ -56,6 +71,10 @@ export class ProductListComponent implements OnInit {
     this.end += this.pageSize;
     this.currentPage++;
     this.selectedProduct = null;
+  }
+
+  loadMore() {
+    this.productService.initProducts();
   }
 
   onSelect(product: Product) {
